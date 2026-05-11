@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artykuł 1</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">B.L.O.gg</a></h1>
+    </header>
+    <main>
+      <article>
+        <h2>Tytuł artykułu 1</h2>
+        <p>
+          W ramach wprowadzania do PHP. Przedstawię ci podstawową składnię
+          języka PHP.
+        </p>
+        <hr />
+        <img src="image1.png" alt="PHP kurs" />
+        <p>
+          PHP jest językiem skryptowym, który jest szeroko stosowany do
+          tworzenia dynamicznych stron internetowych. Oto kilka podstawowych
+          elementów składni PHP:
+        </p>
+        <h3>1. Tag otwierający i zamykający</h3>
+        <p>
+          Każdy skrypt PHP musi zaczynać się od tagu otwierającego
+          <code>&lt;?php</code> i kończyć tagiem zamykającym <code>?&gt;</code>.
+          Wszystko, co znajduje się pomiędzy tymi tagami, jest interpretowane
+          jako kod PHP.
+        </p>
+        <h3>2. Zmienne</h3>
+        <p>
+          Zmienne w PHP zaczynają się od znaku dolara <code>$</code>, a
+          następnie nazwy zmiennej. Nazwy zmiennych są case-sensitive, co
+          oznacza, że <code>$zmienna</code> i <code>$Zmienna</code> to dwie
+          różne zmienne.
+        </p>
+        <h3>3. Komentarze</h3>
+        <p>PHP obsługuje trzy rodzaje komentarzy:</p>
+        <ul>
+          <li><code>//</code> - komentarz jednoliniowy</li>
+          <li><code>#</code> - komentarz jednoliniowy</li>
+          <li><code>/* ... */</code> - komentarz wieloliniowy</li>
+        </ul>
+        <h3>4. Instrukcje warunkowe</h3>
+        <p>
+          PHP obsługuje instrukcje warunkowe, takie jak <code>if</code>,
+          <code>else</code>, i <code>elseif</code>. Pozwalają one na wykonywanie
+          różnych bloków kodu w zależności od spełnienia określonych warunków.
+        </p>
+        <h3>5. Pętle</h3>
+        <p>
+          PHP oferuje różne rodzaje pętli, takie jak <code>for</code>,
+          <code>while</code>, i <code>foreach</code>. Pętle pozwalają na
+          wielokrotne wykonywanie bloku kodu.
+        </p>
+      </article>
+
+      <aside>
+        <h3>O autorze</h3>
+        <p>
+          Jan Kowalski jest doświadczonym programistą PHP z ponad 10-letnim
+          stażem. Specjalizuje się w tworzeniu aplikacji webowych i dzieli się
+          swoją wiedzą poprzez bloga i kursy online.
+        </p>
+
+        <h3>Inne artykuły</h3>
+        <nav>
+            <ul>
+                <li><a href="artykul2">
+                    <img src="image2.png" alt="kurs JS" />
+                    Tytuł artykułu 2</a></li>
+                <li><a href="/artykul3">
+                    <img src="image3.png" alt="kurs CSS" />
+                    Tytuł artykułu 3</a></li>
+            </ul>
+        </nav>
+
+      </aside>
+
+
+      <section>
+        <h3>Komentarze</h3>
+        <!-- Brak komentarzy -->
+
+        <div class="comment-container">
+          <p>Brak komentarzy. Bądź pierwszy, który skomentuje!</p>
+        </div>
+
+        <!-- kontener komentarza -->
+
+        <div class="comment-container">
+          <p><strong>Użytkownik1:</strong> To jest pierwszy komentarz!</p>
+        </div>
+
+        <!-- formularz komentarza -->
+        <form action="dodaj_komentarz.php" method="post">
+          <label for="comment">Dodaj komentarz:</label><br />
+          <textarea
+            id="comment"
+            name="comment"
+            rows="4"
+            cols="50"
+            required
+          ></textarea
+          ><br />
+          <button type="submit">Dodaj komentarz</button>
+        </form>
+      </section>
+    </main>
+    <footer>copyright &copy; 2026 B.L.O.gg</footer>
+  </body>
+</html>

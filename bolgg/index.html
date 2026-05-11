@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Strona główna</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>
+    <a href="index.html">Blogg</a>
+    <a href="rejestracja.php">Rejestracja</a>
+    <a href="logowanie.php">Logowanie</a>
+      </h1>
+    </header>
+    <main>
+      <section aria-labelledby="login-section" class="form-section visible">
+        <h2 id="login-section">Sekcja logowania</h2>
+        <form action="logowanie.php" method="get">
+            <label for="username">Nazwa użytkownika:</label>
+            <input type="text" id="username" name="username" required />
+    
+            <label for="password">Hasło:</label>
+            <input type="password" id="password" name="password" required />
+    
+            <button type="submit">Zaloguj się</button>
+        </form>
+            <p>Nie masz konta? <a href="rejestracja.php" id="showRegister">Zarejestruj się</a></p>
+
+      </section>
+      <section aria-labelledby="blog-section">
+        <h2 id="blog-section">5 najnowszych artykułów</h2>
+
+        <div id="blog-cards-wrap">
+          <a class="blog-card" href="/artykul1">
+            <img src="image1.png" alt="PHP kurs" />
+            <h3>Tytuł artykułu 1</h3>
+            <p>Krótki opis artykułu 1...</p>
+          </a>
+          <a class="blog-card" href="/artykul2">
+            <img src="image2.png" alt="JS kurs" />
+            <h3>Tytuł artykułu 2</h3>
+            <p>Krótki opis artykułu 2...</p>
+          </a>
+          <a class="blog-card" href="/artykul3">
+            <img src="image3.png" alt="HTML kurs" />
+            <h3>Tytuł artykułu 3</h3>
+            <p>Krótki opis artykułu 3...</p>
+          </a>
+          <a class="blog-card" href="/artykul4">
+            <img src="image4.png" alt="CSS kurs" />
+            <h3>Tytuł artykułu 4</h3>
+            <p>Krótki opis artykułu 4...</p>
+          </a>
+        </div>
+      </section>
+    </main>
+    <footer>copyright &copy; 2026 B.L.O.gg</footer>
+    <script src="script.js"></script>
+  </body>
+</html>
