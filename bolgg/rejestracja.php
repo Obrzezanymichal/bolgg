@@ -1,63 +1,73 @@
 <?php
 session_start();
 
-// Włączenie raportowania błędów MySQLi (w PHP 8.1+ jest to już włączone domyślnie)
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Połączenie obiektowe (OOP) zamiast proceduralnego
-$db = new mysqli("localhost", "root", "", "blog");
+// Konfiguracja połączenia PDO
+$host    = 'localhost';
+$dbName  = 'blog';
+$user    = 'root';
+$pass    = '';
+$charset = 'utf8mb4';
 
-if ($db->connect_error) {
-    die("PROBLEM Z POŁĄCZENIEM: " . $db->connect_error);
+$dsn = "mysql:host=$host;dbname=$dbName;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Włącza rzucanie wyjątków przy błędach
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Tablice asocjacyjne jako domyślny format danych
+    PDO::ATTR_EMULATE_PREPARES   => false,                  // Wyłączenie emulacji dla lepszego bezpieczeństwa
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    die("PROBLEM Z POŁĄCZENIEM: " . $e->getMessage());
 }
 
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Filtrowanie i pobieranie danych z formularza
     $login    = trim($_POST['new-username'] ?? '');
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['new-password'] ?? '';
     $repeat   = $_POST['new-re-password'] ?? '';
 
-    // 1. Walidacja: Czy pola są puste?
+    // Wczesne powracanie (Early Return) - sprawdzamy błędy najpierw
     if ($login === '' || $email === '' || $password === '' || $repeat === '') {
         $message = 'Wypełnij wszystkie pola formularza.';
-    } 
-    // 2. Walidacja: Czy hasła się zgadzają?
-    elseif ($password !== $repeat) {
+    } elseif ($password !== $repeat) {
         $message = 'Hasła nie są takie same.';
-    } 
-    // 3. Walidacja: Poprawność formatu e-mail (dodatkowe zabezpieczenie)
-    elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = 'Podany adres e-mail jest nieprawidłowy.';
-    } 
-    else {
-        // Sprawdzenie, czy użytkownik już istnieje
-        $stmt = $db->prepare("SELECT id FROM uzytkownicy WHERE login = ? OR email = ? LIMIT 1");
-        $stmt->bind_param("ss", $login, $email);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows > 0) {
-            $message = 'Ten login lub e-mail jest już zajęty.';
-            $stmt->close();
-        } else {
-            $stmt->close(); // Zamykamy poprzednie zapytanie przed wykonaniem nowego
-
-            // Rejestracja nowego użytkownika
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $db->prepare("INSERT INTO uzytkownicy (login, haslo, email) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $login, $hash, $email);
-
-            if ($stmt->execute()) {
-                $message = 'Rejestracja zakończona. Możesz się teraz zalogować.';
+    } else {
+        try {
+            // 1. Sprawdzenie czy użytkownik istnieje (używamy nazwanych parametrów :login, :email)
+            $stmt = $pdo->prepare("SELECT id FROM uzytkownicy WHERE login = :login OR email = :email LIMIT 1");
+            $stmt->execute(['login' => $login, 'email' => $email]);
+            
+            if ($stmt->fetch()) {
+                $message = 'Ten login lub e-mail jest już zajęty.';
             } else {
-                $message = 'Wystąpił błąd podczas zapisu do bazy danych.';
+                // 2. Rejestracja nowego użytkownika
+                $hash = password_hash($password, PASSWORD_DEFAULT);
+                
+                $stmt = $pdo->prepare("INSERT INTO uzytkownicy (login, haslo, email) VALUES (:login, :haslo, :email)");
+                $success = $stmt->execute([
+                    'login' => $login,
+                    'haslo' => $hash,
+                    'email' => $email
+                ]);
+
+                if ($success) {
+                    $message = 'Rejestracja zakończona. Możesz się teraz zalogować.';
+                } else {
+                    $message = 'Wystąpił błąd podczas zapisu do bazy danych.';
+                }
             }
-            $stmt->close();
+        } catch (\PDOException $e) {
+            // Logowanie błędu dla programisty, ogólny komunikat dla użytkownika
+            error_log($e->getMessage());
+            $message = 'Wystąpił nieoczekiwany błąd serwera.';
         }
     }
 }
