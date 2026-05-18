@@ -1,26 +1,65 @@
 <?php
 session_start();
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-error_reporting(E_ALL);            //raportowanie wszystkich błędów
+
+error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-$db = mysqli_connect("localhost", "root", "", "blog");
-if (!$db) {
-    die("PROBLEM Z POŁĄCZENIEM: " . mysqli_connect_error());
+// Konfiguracja połączenia PDO (najlepiej przenieść to do osobnego pliku, np. config.php)
+$host    = 'localhost';
+$dbName  = 'blog';
+$user    = 'root';
+$pass    = '';
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$dbName;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    die("PROBLEM Z POŁĄCZENIEM: " . $e->getMessage());
 }
 
 $message = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loginOrEmail = trim($_POST['login_or_email'] ?? '');
-    $password = $_POST['password'] ?? '';            //hash
+    $password     = $_POST['password'] ?? '';
 
+    // 1. Walidacja: Czy pola nie są puste?
     if ($loginOrEmail === '' || $password === '') {
-        $message = ' Wypełnij wszystkie pola.';
+        $message = 'Wypełnij wszystkie pola.';
     } else {
-        $stmt = mysqli_prepare($db, "SELECT id, login, haslo FROM uzytkownicy WHERE login = ? OR email = ? LIMIT 1");
-        mysqli_stmt_bind_param($stmt, "ss", $loginOrEmail, $loginOrEmail);    
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_bind_result($stmt, $id, $login, $hash);
+        try {
+            // 2. Pobranie danych użytkownika z bazy danych
+            $stmt = $pdo->prepare("SELECT id, login, haslo FROM uzytkownicy WHERE login = :input OR email = :input LIMIT 1");
+            $stmt->execute(['input' => $loginOrEmail]);
+            $user = $stmt->fetch(); // Zwraca tablicę asocjacyjną lub false
+
+            // 3. Weryfikacja: Jeśli użytkownik istnieje, sprawdzamy hasło
+            // Uwaga: Bezpieczniej jest dać ten sam komunikat ("Nieprawidłowy login lub hasło") 
+            // zarówno gdy hasło jest złe, jak i gdy login nie istnieje.
+            if ($user && password_verify($password, $user['haslo'])) {
+                // Regeneracja ID sesji chroni przed atakami typu Session Fixation
+                session_regenerate_id(true);
+
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user']    = $user['login'];
+                
+                $message = "Zalogowano pomyślnie jako: " . htmlspecialchars($user['login'], ENT_QUOTES, 'UTF-8');
+            } else {
+                $message = 'Nieprawidłowy login lub hasło.';
+            }
+        } catch (\PDOException $e) {
+            error_log($e->getMessage());
+            $message = 'Wystąpił nieoczekiwany błąd serwera.';
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
