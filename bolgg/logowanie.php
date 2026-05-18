@@ -1,3 +1,27 @@
+<?php
+session_start();
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+error_reporting(E_ALL);            //raportowanie wszystkich błędów
+ini_set('display_errors', 1);
+
+$db = mysqli_connect("localhost", "root", "", "blog");
+if (!$db) {
+    die("PROBLEM Z POŁĄCZENIEM: " . mysqli_connect_error());
+}
+
+$message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $loginOrEmail = trim($_POST['login_or_email'] ?? '');
+    $password = $_POST['password'] ?? '';            //hash
+
+    if ($loginOrEmail === '' || $password === '') {
+        $message = ' Wypełnij wszystkie pola.';
+    } else {
+        $stmt = mysqli_prepare($db, "SELECT id, login, haslo FROM uzytkownicy WHERE login = ? OR email = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "ss", $loginOrEmail, $loginOrEmail);    
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $id, $login, $hash);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
