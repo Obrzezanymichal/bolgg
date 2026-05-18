@@ -1,77 +1,48 @@
 <?php
 session_start();
-
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Konfiguracja połączenia PDO
-$host    = 'localhost';
-$dbName  = 'blog';
-$user    = 'root';
-$pass    = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$dbName;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Włącza rzucanie wyjątków przy błędach
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Tablice asocjacyjne jako domyślny format danych
-    PDO::ATTR_EMULATE_PREPARES   => false,                  // Wyłączenie emulacji dla lepszego bezpieczeństwa
-];
-
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-    die("PROBLEM Z POŁĄCZENIEM: " . $e->getMessage());
+$db = mysqli_connect("localhost", "root", "", "blog");
+if (!$db) {
+    die("PROBLEM Z POŁĄCZENIEM: " . mysqli_connect_error());
 }
 
 $message = '';
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login    = trim($_POST['new-username'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
+    $login = trim($_POST['new-username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['new-password'] ?? '';
-    $repeat   = $_POST['new-re-password'] ?? '';
+    $repeat = $_POST['new-re-password'] ?? '';
 
-    // Wczesne powracanie (Early Return) - sprawdzamy błędy najpierw
     if ($login === '' || $email === '' || $password === '' || $repeat === '') {
-        $message = 'Wypełnij wszystkie pola formularza.';
+        $message = ' Wypełnij wszystkie pola formularza.';
     } elseif ($password !== $repeat) {
-        $message = 'Hasła nie są takie same.';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $message = 'Podany adres e-mail jest nieprawidłowy.';
+        $message = ' Hasła nie są takie same.';
     } else {
-        try {
-            // 1. Sprawdzenie czy użytkownik istnieje (używamy nazwanych parametrów :login, :email)
-            $stmt = $pdo->prepare("SELECT id FROM uzytkownicy WHERE login = :login OR email = :email LIMIT 1");
-            $stmt->execute(['login' => $login, 'email' => $email]);
-            
-            if ($stmt->fetch()) {
-                $message = 'Ten login lub e-mail jest już zajęty.';
-            } else {
-                // 2. Rejestracja nowego użytkownika
-                $hash = password_hash($password, PASSWORD_DEFAULT);
-                
-                $stmt = $pdo->prepare("INSERT INTO uzytkownicy (login, haslo, email) VALUES (:login, :haslo, :email)");
-                $success = $stmt->execute([
-                    'login' => $login,
-                    'haslo' => $hash,
-                    'email' => $email
-                ]);
+        $stmt = mysqli_prepare($db, "SELECT id FROM uzytkownicy WHERE login = ? OR email = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "ss", $login, $email);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
 
-                if ($success) {
-                    $message = 'Rejestracja zakończona. Możesz się teraz zalogować.';
-                } else {
-                    $message = 'Wystąpił błąd podczas zapisu do bazy danych.';
-                }
+        if (mysqli_stmt_num_rows($stmt) > 0) {
+            $message = ' Ten login lub e-mail jest już zajęty.';
+        } else {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = mysqli_prepare($db, "INSERT INTO uzytkownicy (login, haslo, email) VALUES (?, ?, ?)");
+            mysqli_stmt_bind_param($stmt, "sss", $login, $hash, $email);
+
+            if (mysqli_stmt_execute($stmt)) {
+                $message = ' Rejestracja zakończona. Możesz się teraz zalogować.';
+            } else {
+                $message = ' Wystąpił błąd podczas zapisu do bazy danych.';
             }
-        } catch (\PDOException $e) {
-            // Logowanie błędu dla programisty, ogólny komunikat dla użytkownika
-            error_log($e->getMessage());
-            $message = 'Wystąpił nieoczekiwany błąd serwera.';
         }
     }
 }
-?><!DOCTYPE html>
+?>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
